@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X-learned",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "在 X 收藏帖子时当场生成 TLDR，并写入你自己的知识库。",
   "permissions": [
     "storage",
