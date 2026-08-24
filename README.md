@@ -9,7 +9,8 @@
 - Chrome 扩展：在 `x.com` 收藏时弹出 TLDR 卡片
 - 本地 Markdown：下载到 `Downloads/x-learned/`（或你选的文件夹）
 - 远端：可选推到 `Young1108/llm_wiki` 的 `raw/x-bookmarks/`
-- 默认模型：DeepSeek `deepseek-v4-flash-vision-exp`
+- 默认模型：DeepSeek `deepseek-v4-flash-vision-exp`（可换成 OpenAI、Claude、Gemini、Groq、OpenRouter、xAI、Mistral、Kimi、智谱、通义千问、本地 Claude）
+- 每个 Provider 单独保存 API Key，切换时不会互相覆盖
 
 ## 安装（开发版）
 

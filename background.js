@@ -16,8 +16,40 @@ const PROVIDER_DEFAULT_ENDPOINTS = {
   openai: 'https://api.openai.com/v1/chat/completions',
   deepseek: 'https://api.deepseek.com/chat/completions',
   claude: 'https://api.anthropic.com/v1/messages',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+  groq: 'https://api.groq.com/openai/v1/chat/completions',
+  openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+  xai: 'https://api.x.ai/v1/chat/completions',
+  mistral: 'https://api.mistral.ai/v1/chat/completions',
   kimi: 'https://api.moonshot.cn/v1/chat/completions',
   zhipu: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+  qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+};
+const PROVIDER_DEFAULT_MODELS = {
+  deepseek: 'deepseek-v4-flash-vision-exp',
+  openai: 'gpt-4o-mini',
+  claude: 'claude-sonnet-4-20250514',
+  gemini: 'gemini-2.5-flash',
+  groq: 'llama-3.3-70b-versatile',
+  openrouter: 'openai/gpt-4o-mini',
+  xai: 'grok-3-mini',
+  mistral: 'mistral-small-latest',
+  kimi: 'moonshot-v1-8k',
+  zhipu: 'glm-4-flash',
+  qwen: 'qwen-plus',
+};
+const PROVIDER_LABELS = {
+  deepseek: 'DeepSeek',
+  openai: 'OpenAI',
+  claude: 'Claude',
+  gemini: 'Gemini',
+  groq: 'Groq',
+  openrouter: 'OpenRouter',
+  xai: 'xAI',
+  mistral: 'Mistral',
+  kimi: 'Kimi',
+  zhipu: '智谱',
+  qwen: '通义千问',
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -661,17 +693,23 @@ async function handleTLDRRequest(tweetData, articleUrl, quotedTweetUrl) {
   // Read encrypted API key from local storage (skipped for local-claude provider)
   var apiKey;
   if (settings.provider !== 'local-claude') {
-    var localData = await chrome.storage.local.get('encryptedApiKey');
-    if (!localData.encryptedApiKey) {
-      throw new Error('请先在插件设置中填写 API Key');
+    var localData = await chrome.storage.local.get(['encryptedApiKey', 'encryptedApiKeys']);
+    var enc = null;
+    if (localData.encryptedApiKeys && localData.encryptedApiKeys[settings.provider]) {
+      enc = localData.encryptedApiKeys[settings.provider];
+    } else if (localData.encryptedApiKey) {
+      enc = localData.encryptedApiKey;
+    }
+    if (!enc) {
+      throw new Error('请先在插件设置中填写当前模型的 API Key');
     }
     try {
-      apiKey = await decryptApiKey(localData.encryptedApiKey);
+      apiKey = await decryptApiKey(enc);
     } catch (_) {
       throw new Error('API Key 解密失败，请重新保存 API Key');
     }
     if (!apiKey) {
-      throw new Error('请先在插件设置中填写 API Key');
+      throw new Error('请先在插件设置中填写当前模型的 API Key');
     }
   }
 
@@ -681,24 +719,26 @@ async function handleTLDRRequest(tweetData, articleUrl, quotedTweetUrl) {
   const endpoint = await resolveApiEndpoint(settings.provider, settings.baseUrl);
 
   let tldr;
+  var model = settings.model || PROVIDER_DEFAULT_MODELS[settings.provider] || '';
+  var label = PROVIDER_LABELS[settings.provider] || settings.provider;
   switch (settings.provider) {
-    case 'deepseek':
-      tldr = await callOpenAICompatible(apiKey, endpoint, settings.model || 'deepseek-v4-flash-vision-exp', prompt, maxTokens, 'DeepSeek');
-      break;
-    case 'openai':
-      tldr = await callOpenAICompatible(apiKey, endpoint, settings.model || 'gpt-4o-mini', prompt, maxTokens, 'OpenAI');
-      break;
     case 'claude':
-      tldr = await callClaude(apiKey, endpoint, settings.model || 'claude-sonnet-4-20250514', prompt, maxTokens);
-      break;
-    case 'kimi':
-      tldr = await callOpenAICompatible(apiKey, endpoint, settings.model || 'moonshot-v1-8k', prompt, maxTokens, 'Kimi');
-      break;
-    case 'zhipu':
-      tldr = await callOpenAICompatible(apiKey, endpoint, settings.model || 'glm-4-flash', prompt, maxTokens, '智谱');
+      tldr = await callClaude(apiKey, endpoint, model, prompt, maxTokens);
       break;
     case 'local-claude':
       tldr = await callLocalClaude(prompt);
+      break;
+    case 'deepseek':
+    case 'openai':
+    case 'gemini':
+    case 'groq':
+    case 'openrouter':
+    case 'xai':
+    case 'mistral':
+    case 'kimi':
+    case 'zhipu':
+    case 'qwen':
+      tldr = await callOpenAICompatible(apiKey, endpoint, model, prompt, maxTokens, label, settings.provider);
       break;
     default:
       throw new Error('不支持的模型: ' + settings.provider);
@@ -1054,10 +1094,15 @@ function buildPrompt(tweetData, articleContent, quotedFullContent, language, isA
 
 // Shared caller for OpenAI-compatible APIs (OpenAI, Kimi, Zhipu all use the
 // same request/response format: messages array, choices[0].message.content).
-async function callOpenAICompatible(apiKey, endpoint, model, prompt, maxTokens, providerLabel) {
+async function callOpenAICompatible(apiKey, endpoint, model, prompt, maxTokens, providerLabel, providerId) {
+  var headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey };
+  if (providerId === 'openrouter') {
+    headers['HTTP-Referer'] = 'https://github.com/Young1108/x-learned';
+    headers['X-Title'] = 'X-learned';
+  }
   var res = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+    headers: headers,
     body: JSON.stringify({
       model: model,
       messages: [

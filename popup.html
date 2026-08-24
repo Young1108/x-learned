@@ -51,12 +51,26 @@
             <div class="form-group">
               <label for="provider">AI 模型</label>
               <select id="provider">
-                <option value="deepseek" selected>DeepSeek</option>
-                <option value="openai">OpenAI (GPT)</option>
-                <option value="claude">Claude (Anthropic)</option>
-                <option value="kimi">Kimi (月之暗面)</option>
-                <option value="zhipu">智谱 (GLM)</option>
-                <option value="local-claude">本地 Claude (无需 API Key)</option>
+                <optgroup label="默认">
+                  <option value="deepseek" selected>DeepSeek</option>
+                </optgroup>
+                <optgroup label="国际">
+                  <option value="openai">OpenAI (GPT)</option>
+                  <option value="claude">Claude (Anthropic)</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="groq">Groq</option>
+                  <option value="openrouter">OpenRouter</option>
+                  <option value="xai">xAI (Grok)</option>
+                  <option value="mistral">Mistral</option>
+                </optgroup>
+                <optgroup label="国内">
+                  <option value="kimi">Kimi (月之暗面)</option>
+                  <option value="zhipu">智谱 (GLM)</option>
+                  <option value="qwen">通义千问</option>
+                </optgroup>
+                <optgroup label="本地">
+                  <option value="local-claude">本地 Claude (无需 API Key)</option>
+                </optgroup>
               </select>
             </div>
             <div class="form-group">
@@ -74,7 +88,7 @@
           <div class="form-group">
             <label for="apiKey">API Key</label>
             <div class="input-wrapper">
-              <input type="password" id="apiKey" placeholder="输入你的 API Key" />
+              <input type="password" id="apiKey" placeholder="当前 Provider 的 API Key" />
               <button id="toggleKey" class="toggle-btn" title="显示/隐藏">
                 <svg class="eye-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>

@@ -6,10 +6,19 @@ const DEFAULT_MODELS = {
   deepseek: 'deepseek-v4-flash-vision-exp',
   openai: 'gpt-4o-mini',
   claude: 'claude-sonnet-4-20250514',
+  gemini: 'gemini-2.5-flash',
+  groq: 'llama-3.3-70b-versatile',
+  openrouter: 'openai/gpt-4o-mini',
+  xai: 'grok-3-mini',
+  mistral: 'mistral-small-latest',
   kimi: 'moonshot-v1-8k',
   zhipu: 'glm-4-flash',
+  qwen: 'qwen-plus',
   'local-claude': '（自动）',
 };
+
+var providerKeyCache = {};
+var lastProvider = 'deepseek';
 
 // Theme cycle order: auto → light → dark → auto
 const THEME_CYCLE = ['auto', 'light', 'dark'];
@@ -21,8 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   migrateAndLoadSettings();
   setupTabs();
   document.getElementById('provider').addEventListener('change', (e) => {
-    updateModelHint(e.target.value);
-    toggleLocalClaudeFields(e.target.value);
+    onProviderChange(e.target.value);
   });
   document.getElementById('toggleKey').addEventListener('click', toggleKeyVisibility);
   document.getElementById('saveBtn').addEventListener('click', saveSettings);
@@ -135,16 +143,21 @@ async function migrateAndLoadSettings() {
     await chrome.storage.sync.remove('apiKey');
   }
 
-  // Load the encrypted key for display
-  var apiKeyPlain = '';
-  var localData = await chrome.storage.local.get(['encryptedApiKey', 'encryptedGithubPat']);
-  if (localData.encryptedApiKey) {
-    try {
-      apiKeyPlain = await decryptApiKey(localData.encryptedApiKey);
-    } catch (_) {
-      // Decryption failed — key may be corrupted; user will re-enter
-    }
+  var localData = await chrome.storage.local.get(['encryptedApiKey', 'encryptedApiKeys', 'encryptedGithubPat']);
+  providerKeyCache = {};
+  var keysEnc = localData.encryptedApiKeys || {};
+  var names = Object.keys(keysEnc);
+  for (var i = 0; i < names.length; i++) {
+    try { providerKeyCache[names[i]] = await decryptApiKey(keysEnc[names[i]]); } catch (_) {}
   }
+  if (localData.encryptedApiKey && !providerKeyCache.deepseek && !providerKeyCache[syncData.provider]) {
+    try {
+      var legacy = await decryptApiKey(localData.encryptedApiKey);
+      providerKeyCache[syncData.provider || 'deepseek'] = legacy;
+    } catch (_) {}
+  }
+  lastProvider = syncData.provider || 'deepseek';
+  var apiKeyPlain = providerKeyCache[lastProvider] || '';
   var githubPatPlain = '';
   if (localData.encryptedGithubPat) {
     try {
@@ -318,6 +331,16 @@ function setupTabs() {
   });
 }
 
+
+async function onProviderChange(provider) {
+  providerKeyCache[lastProvider] = document.getElementById('apiKey').value.trim();
+  lastProvider = provider;
+  document.getElementById('apiKey').value = providerKeyCache[provider] || '';
+  document.getElementById('apiKey').placeholder = provider === 'local-claude' ? '' : (provider + ' API Key');
+  updateModelHint(provider);
+  toggleLocalClaudeFields(provider);
+}
+
 // ── Settings functions ────────────────────────────────────────────────────────
 
 function updateModelHint(provider) {
@@ -353,11 +376,18 @@ async function saveSettings() {
       }
     }
 
-    // Encrypt API key and store in local storage (device-only)
+    providerKeyCache[selectedProvider] = apiKeyPlain;
+    var keysEnc = {};
+    var existing = await chrome.storage.local.get('encryptedApiKeys');
+    if (existing.encryptedApiKeys) keysEnc = existing.encryptedApiKeys;
     if (apiKeyPlain) {
-      var encrypted = await encryptApiKey(apiKeyPlain);
-      await chrome.storage.local.set({ encryptedApiKey: encrypted });
+      keysEnc[selectedProvider] = await encryptApiKey(apiKeyPlain);
+    } else {
+      delete keysEnc[selectedProvider];
     }
+    var toSet = { encryptedApiKeys: keysEnc };
+    if (apiKeyPlain) toSet.encryptedApiKey = keysEnc[selectedProvider];
+    await chrome.storage.local.set(toSet);
 
     var githubPatPlain = document.getElementById('githubPat').value.trim();
     var pushToLlmWiki = document.getElementById('pushToLlmWiki').checked;
