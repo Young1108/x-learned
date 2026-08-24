@@ -99,11 +99,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // Ping native host to check if it's installed
   if (message.type === 'PING_NATIVE_HOST') {
     chrome.runtime.sendNativeMessage(NATIVE_HOST_NAME, { action: 'ping' })
       .then(function (result) { sendResponse(result); })
       .catch(function () { sendResponse({ success: false }); });
+    return true;
+  }
+
+  if (message.type === 'REMOVE_RECORD') {
+    removeRecord(message.tweetData)
+      .then(function (result) { sendResponse({ success: true, removed: result }); })
+      .catch(function (err) { sendResponse({ success: false, error: err.message }); });
     return true;
   }
 });
@@ -131,6 +137,8 @@ async function saveToHistory(tweetData, tldr, isArticle) {
       isArticle: isArticle,
     };
 
+    var url = entry.tweetUrl;
+    history = history.filter(function (h) { return !sameTweet(h.tweetUrl, url); });
     history.unshift(entry);
     if (history.length > MAX_HISTORY) {
       history = history.slice(0, MAX_HISTORY);
@@ -140,6 +148,70 @@ async function saveToHistory(tweetData, tldr, isArticle) {
   } catch (_) {
     // History save failure is non-critical — silently ignore
   }
+}
+
+
+function statusIdFromUrl(url) {
+  try {
+    var parts = new URL(url).pathname.split('/').filter(Boolean);
+    var si = parts.indexOf('status');
+    if (si >= 0 && parts[si + 1]) return String(parts[si + 1]).replace(/[^0-9].*$/, '');
+  } catch (_) {}
+  return '';
+}
+
+function sameTweet(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  var ia = statusIdFromUrl(a);
+  var ib = statusIdFromUrl(b);
+  return !!(ia && ib && ia === ib);
+}
+
+async function removeRecord(tweetData) {
+  var url = (tweetData && (tweetData.tweetUrl || tweetData.url)) || '';
+  var result = await chrome.storage.local.get({ history: [] });
+  var before = result.history.length;
+  var history = result.history.filter(function (h) { return !sameTweet(h.tweetUrl, url); });
+  await chrome.storage.local.set({ history: history });
+  var prefs = await chrome.storage.sync.get({ pushToLlmWiki: false });
+  if (prefs.pushToLlmWiki && url) {
+    try { await deleteWikiBookmark(tweetData); } catch (_) {}
+  }
+  return before - history.length;
+}
+
+async function deleteWikiBookmark(tweetData) {
+  var syncData = await chrome.storage.sync.get({
+    llmWikiRepo: 'Young1108/llm_wiki',
+    llmWikiPath: 'raw/x-bookmarks',
+  });
+  var parsed = parseOwnerRepo(syncData.llmWikiRepo);
+  if (!parsed) return;
+  var localData = await chrome.storage.local.get('encryptedGithubPat');
+  if (!localData.encryptedGithubPat) return;
+  var token = await decryptApiKey(localData.encryptedGithubPat);
+  if (!token) return;
+  var slugFile = toWikiFileSlug(tweetData);
+  var path = wikiPathWithAttempt(syncData.llmWikiPath, slugFile, 0);
+  var url = 'https://api.github.com/repos/' + parsed.owner + '/' + parsed.repo + '/contents/' + path;
+  var headers = {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': 'Bearer ' + token,
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  var getRes = await fetch(url, { headers: headers });
+  if (!getRes.ok) return;
+  var meta = await getRes.json();
+  if (!meta || !meta.sha) return;
+  await fetch(url, {
+    method: 'DELETE',
+    headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+    body: JSON.stringify({
+      message: 'remove: x bookmark ' + slugFile.replace(/\.md$/i, ''),
+      sha: meta.sha,
+    }),
+  });
 }
 
 // ── Markdown file saving (native host + chrome.downloads fallback) ───────────

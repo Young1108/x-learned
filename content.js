@@ -46,22 +46,44 @@
 
   // ── Bookmark click detection ──────────────────────────────────────────────
 
+  function extensionAlive() {
+    try { return !!(chrome.runtime && chrome.runtime.id); } catch (_) { return false; }
+  }
+
+  function extensionIconUrl() {
+    try { return chrome.runtime.getURL('icons/icon48.png'); } catch (_) { return ''; }
+  }
+
   document.addEventListener('click', (event) => {
+    const removeBtn = findAncestorByTestId(event.target, 'removeBookmark');
+    if (removeBtn) {
+      const article = removeBtn.closest('article[data-testid="tweet"]');
+      if (article) processUnbookmark(article);
+      return;
+    }
+
     const bookmarkBtn = findAncestorByTestId(event.target, 'bookmark');
     if (!bookmarkBtn) return;
 
-    // Only fire when adding a bookmark, not when removing one.
-    // X uses "removeBookmark" for the un-bookmark button.
-    const removeBtn = findAncestorByTestId(event.target, 'removeBookmark');
-    if (removeBtn) return;
-
     const article = bookmarkBtn.closest('article[data-testid="tweet"]');
     if (!article) return;
+
+    if (!extensionAlive()) return;
 
     const cardId = 'btl-' + (++cardSeq);
     createLoadingCard(cardId);
     processBookmark(article, cardId);
   }, true);
+
+  function processUnbookmark(article) {
+    if (!extensionAlive()) return;
+    try {
+      const tweetData = extractTweetContent(article);
+      chrome.runtime.sendMessage({ type: 'REMOVE_RECORD', tweetData: tweetData }, function () {
+        void chrome.runtime.lastError;
+      });
+    } catch (_) {}
+  }
 
   // ── Main async flow (per card) ────────────────────────────────────────────
 
@@ -79,6 +101,10 @@
         return;
       }
 
+      if (!extensionAlive()) {
+        updateCard(cardId, '扩展已更新，请刷新 X 页面', true);
+        return;
+      }
       chrome.runtime.sendMessage(
         { type: 'GENERATE_TLDR', tweetData, articleUrl, quotedTweetUrl },
         (response) => {
@@ -360,7 +386,8 @@
     // Use extension icon instead of emoji
     const iconImg = document.createElement('img');
     iconImg.className = 'btl-card-title-icon';
-    iconImg.src = chrome.runtime.getURL('icons/icon48.png');
+    var iconSrc = extensionIconUrl();
+    if (iconSrc) iconImg.src = iconSrc;
     iconImg.alt = '';
     title.appendChild(iconImg);
     title.appendChild(document.createTextNode('X-learned'));
