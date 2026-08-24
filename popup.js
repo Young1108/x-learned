@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('toggleKey').addEventListener('click', toggleKeyVisibility);
   document.getElementById('saveBtn').addEventListener('click', saveSettings);
   document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
-  document.getElementById('themeToggle').addEventListener('click', cycleTheme);
+  document.querySelectorAll('.theme-chip').forEach(function (chip) { chip.addEventListener('click', function () { setTheme(chip.getAttribute('data-theme')); }); });
   document.getElementById('autoDownloadMd').addEventListener('change', toggleSavePathVisibility);
   document.getElementById('aiEnabled').addEventListener('change', toggleAiFields);
   document.getElementById('pickFolderBtn').addEventListener('click', pickFolder);
@@ -74,14 +74,14 @@ function initTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   document.body.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-chip').forEach(function (chip) {
+    chip.classList.toggle('active', chip.getAttribute('data-theme') === theme);
+  });
 }
 
-function cycleTheme() {
-  var currentTheme = document.documentElement.getAttribute('data-theme') || 'auto';
-  var idx = THEME_CYCLE.indexOf(currentTheme);
-  var nextTheme = THEME_CYCLE[(idx + 1) % THEME_CYCLE.length];
-  applyTheme(nextTheme);
-  chrome.storage.sync.set({ theme: nextTheme });
+function setTheme(theme) {
+  applyTheme(theme);
+  chrome.storage.sync.set({ theme: theme });
 }
 
 // ── API Key encryption (AES-GCM via Web Crypto API) ─────────────────────────
@@ -324,6 +324,8 @@ function setupTabs() {
       document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
       btn.classList.add('active');
       document.getElementById('tab-' + target).classList.add('active');
+      var bar = document.getElementById('saveBar');
+      if (bar) bar.style.display = target === 'history' ? 'none' : '';
       if (target === 'history') {
         loadHistory();
       }

@@ -2,12 +2,13 @@
 /* Light theme (default values) — dark theme overrides below. */
 
 .btl-card-container {
-  --btl-card-bg: #101310;
-  --btl-card-shadow: 0 16px 48px rgba(0,0,0,0.45);
-  --btl-text: #f2f5ef;
-  --btl-text-bold: #fafafa;
-  --btl-text-secondary: #a1a1aa;
-  --btl-border: rgba(255,255,255,0.08);
+  --btl-card-bg: #fffaf1;
+  --btl-accent: #e2570d;
+  --btl-card-shadow: 0 18px 40px rgba(28,20,12,0.16);
+  --btl-text: #1c140c;
+  --btl-text-bold: #1c140c;
+  --btl-text-secondary: #6b5744;
+  --btl-border: rgba(28,20,12,0.12);
   --btl-close-hover-bg: rgba(0, 0, 0, 0.06);
   --btl-score-bg: rgba(0, 0, 0, 0.03);
   --btl-heading-border: rgba(200, 245, 66, 0.25);
@@ -23,12 +24,12 @@
 
 /* Dark theme variable overrides (manual dark mode) */
 .btl-card-container.btl-dark {
-  --btl-card-bg: #16181c;
+  --btl-card-bg: #101410; --btl-accent: #c8f542;
   --btl-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --btl-text: #e7e9ea;
-  --btl-text-bold: #ffffff;
-  --btl-text-secondary: #71767b;
-  --btl-border: #2f3336;
+  --btl-text: #eef6e4;
+  --btl-text-bold: #f6ffe8;
+  --btl-text-secondary: #a7b59a;
+  --btl-border: rgba(200,245,66,0.16);
   --btl-close-hover-bg: rgba(255, 255, 255, 0.08);
   --btl-score-bg: rgba(255, 255, 255, 0.05);
   --btl-heading-border: rgba(200, 245, 66, 0.35);
@@ -45,12 +46,12 @@
 /* Auto dark mode — same overrides, triggered by system preference */
 @media (prefers-color-scheme: dark) {
   .btl-card-container.btl-auto {
-    --btl-card-bg: #16181c;
+    --btl-card-bg: #101410; --btl-accent: #c8f542;
     --btl-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    --btl-text: #e7e9ea;
-    --btl-text-bold: #ffffff;
-    --btl-text-secondary: #71767b;
-    --btl-border: #2f3336;
+    --btl-text: #eef6e4;
+    --btl-text-bold: #f6ffe8;
+    --btl-text-secondary: #a7b59a;
+    --btl-border: rgba(200,245,66,0.16);
     --btl-close-hover-bg: rgba(255, 255, 255, 0.08);
     --btl-score-bg: rgba(255, 255, 255, 0.05);
     --btl-heading-border: rgba(200, 245, 66, 0.35);
@@ -161,7 +162,7 @@
 
 .btl-original-link a {
   font-size: 12px;
-  color: #1d9bf0;
+  color: var(--btl-accent, #e2570d);
   text-decoration: none;
   font-weight: 500;
 }
@@ -214,7 +215,7 @@
 }
 
 .btl-tldr-content li::marker {
-  color: #1d9bf0;
+  color: var(--btl-accent, #e2570d);
 }
 
 /* ── Section headings ────────────────────────────────────────────────────── */
@@ -224,7 +225,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.4px;
-  color: #1d9bf0;
+  color: var(--btl-accent, #e2570d);
   margin: 12px 0 4px 0;
   padding-bottom: 3px;
   border-bottom: 1px solid var(--btl-heading-border);
@@ -279,7 +280,7 @@
   width: 18px;
   height: 18px;
   border: 2.5px solid var(--btl-spinner-border);
-  border-top-color: #1d9bf0;
+  border-top-color: var(--btl-accent, #e2570d);
   border-radius: 50%;
   animation: btl-spin 0.7s linear infinite;
 }
@@ -302,3 +303,6 @@
 @keyframes btl-fade-out {
   to { opacity: 0; transform: translateY(16px) scale(0.97); }
 }
+
+.btl-tldr-card { border: 1px solid var(--btl-border); border-radius: 18px; border-left: 5px solid var(--btl-accent, #e2570d); }
+.btl-card-title { font-family: Palatino, "Iowan Old Style", serif; letter-spacing: -0.02em; }

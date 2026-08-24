@@ -5,46 +5,22 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div class="popup-container">
+    <div class="app">
       <!-- Header with title and theme toggle -->
       <div class="popup-header">
-        <div class="brand"><span class="brand-mark"></span><div><h1 class="popup-title">X-learned</h1><p class="brand-sub">在 X 收藏，当场学会</p></div></div>
-        <button id="themeToggle" class="theme-toggle" title="切换主题">
-          <!-- Sun icon for light mode -->
-          <svg class="theme-icon theme-icon-light" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          <!-- Moon icon for dark mode -->
-          <svg class="theme-icon theme-icon-dark" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M13.36 10.03A6 6 0 015.97 2.64 6 6 0 1013.36 10.03z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <!-- Auto icon for system mode -->
-          <svg class="theme-icon theme-icon-auto" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <rect x="2" y="3" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-            <path d="M5 14h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
+        <div class="brand"><span class="brand-mark"></span><div><h1 class="popup-title">X-learned</h1><p class="brand-sub">收藏一下，当场变成笔记</p></div></div>
+        <div id="themeToggle" class="theme-switch" role="radiogroup" aria-label="外观"><button type="button" class="theme-chip" data-theme="light">浅</button><button type="button" class="theme-chip" data-theme="dark">深</button><button type="button" class="theme-chip" data-theme="auto">系统</button></div>
       </div>
 
       <!-- Tab navigation -->
-      <div class="tab-bar">
-        <button class="tab-btn active" data-tab="settings">设置</button>
-        <button class="tab-btn" data-tab="history">记录</button>
-      </div>
+      <section class="intent"><div><p class="intent-kicker">收藏时</p><p class="intent-title">当场生成摘要</p></div><label class="ai-toggle" title="开启或关闭 AI 摘要"><input type="checkbox" id="aiEnabled" checked /><span class="ai-toggle-slider"></span></label></section>
 
       <!-- Settings tab -->
       <div class="tab-panel active" id="tab-settings">
 
         <!-- Section 1: AI Service Configuration -->
         <div class="settings-card" id="aiConfigCard">
-          <div class="settings-card-header ai-header-row">
-            <span>模型</span>
-            <label class="ai-toggle" title="开启/关闭 AI 摘要和事实核查">
-              <input type="checkbox" id="aiEnabled" checked />
-              <span class="ai-toggle-slider"></span>
-            </label>
-          </div>
+          <div class="settings-card-header">用哪家模型学</div>
 
           <!-- 2-column row: provider + language -->
           <div class="form-row-2col">
@@ -118,7 +94,8 @@
           </div>
         </div>
 
-        <!-- Section 2: File Saving Options -->
+      </div>
+      <div class="tab-panel" id="tab-save">
         <div class="settings-card">
           <div class="settings-card-header">保存</div>
 
@@ -185,6 +162,18 @@
           </div>
         </div>
 
+      </div>
+      <!-- History tab -->
+      <div class="tab-panel" id="tab-history">
+        <div id="historyList" class="history-list"></div>
+        <div id="historyEmpty" class="history-empty" style="display:none;">
+          还没有收藏记录
+        </div>
+        <button id="clearHistoryBtn" class="clear-history-btn" style="display:none;">
+          清空记录
+        </button>
+      </div>
+      <div id="saveBar" class="save-bar">
         <!-- Debug info (collapsible) -->
         <details class="settings-section" id="debugSection">
           <summary class="section-summary">
@@ -219,18 +208,8 @@
         </div>
 
       </div>
-
-      <!-- History tab -->
-      <div class="tab-panel" id="tab-history">
-        <div id="historyList" class="history-list"></div>
-        <div id="historyEmpty" class="history-empty" style="display:none;">
-          还没有收藏记录
-        </div>
-        <button id="clearHistoryBtn" class="clear-history-btn" style="display:none;">
-          清空记录
-        </button>
-      </div>
     </div>
+<nav class="dock" aria-label="分区"><button class="tab-btn active" data-tab="settings">学习</button><button class="tab-btn" data-tab="save">存放</button><button class="tab-btn" data-tab="history">记录</button></nav>
     <script src="popup.js"></script>
   </body>
 </html>
