@@ -36,9 +36,9 @@ git clone https://github.com/Young1108/x-learned.git
 
 ## 效果展示
 
-![agents-spaces](assets/agents-spaces.png)
+![collect-tldr](assets/collect-tldr.png)
 
-多空间并行管理界面：左侧 agents 面板实时展示各工作空间状态（`pi working` / `pi idle` / `codex blocked`），顶部 tab 在多个 spaces 之间切换，右上角显示系统与云端状态。
+在 `x.com` 上点击收藏按钮，立即弹出 X-learned 卡片：**TLDR 一键摘要** + **KEY POINTS 要点提炼**，同时把原文与摘要写入本地知识库。
 
 完整使用流程见 `assets/demo.mp4`。
 
