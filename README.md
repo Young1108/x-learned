@@ -34,6 +34,14 @@ git clone https://github.com/Young1108/x-learned.git
 | 默认推理 | DeepSeek | OpenAI 等 |
 | 远端 | GitHub Contents → `llm_wiki` | 无 |
 
+## 效果展示
+
+![agents-spaces](assets/agents-spaces.png)
+
+多空间并行管理界面：左侧 agents 面板实时展示各工作空间状态（`pi working` / `pi idle` / `codex blocked`），顶部 tab 在多个 spaces 之间切换，右上角显示系统与云端状态。
+
+完整使用流程见 `assets/demo.mp4`。
+
 ## 仓库结构
 
 - `manifest.json` / `popup.*` / `content.*` / `background.js`：扩展本体
